@@ -1,6 +1,8 @@
-## BetterCrunchyRoll
-It makes watching videos on Crunchyroll better!
+## BetterCrunchyRoll - Makes Crunchyroll better!
+
 ![Preview](preview.png)
+
+### Responsive video with inline episode selection and search
 
 ### How do I use these?
 1. Download [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en) Chrome extension
