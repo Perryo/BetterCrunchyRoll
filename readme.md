@@ -1,6 +1,6 @@
 ## BetterCrunchyRoll - Makes Crunchyroll better!
 
-![Preview](preview.png)
+![Preview](better-crunchyroll-preview.png)
 
 ### Responsive video with inline episode selection and search
 
