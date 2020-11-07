@@ -1,5 +1,6 @@
 ## BetterCrunchyRoll
 It makes watching videos on Crunchyroll better!
+![Preview](preview.png)
 
 ### How do I use these?
 1. Download [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en) Chrome extension
