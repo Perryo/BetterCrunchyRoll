@@ -6,7 +6,7 @@
  * Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
  * Dialogue: 0,0:00:07.84,0:00:09.46,string,Acchan,0000,0000,0000,,string, string.
  */
-
+var current_time = -1;
 var button_css = {
     'padding': '10px 20px',
     'background-color': 'transparent',
@@ -48,6 +48,14 @@ var get_page_metadata = function() {
 }
 
 /**
+ * VILOS player only accepts a callback function to get the time.
+ * @param {double} time - Time of current video
+ */
+var get_current_time = function(time){
+    current_time = time;
+}
+
+/**
  * Performs skipping of intros by several methods
  */
 var intro_skip = function(){
@@ -57,22 +65,50 @@ var intro_skip = function(){
     request.responseType = 'text';
     console.log('Found subtitles at: ' + metadata.subtitles[0].url);
     request.onload = function() {
-        return subtitles = request.response;
+        subtitles = request.response;
         // TODO: Data stucture for episode intros with dialog, use lsg as fallback
         var intro_times = time_by_lsg(subtitles);
-        // TODO: Add the button
-        // var video = VILOS_PLAYERJS;
-        // if(seconds){
-        //     var skip_button = $('<button/>').text('Skip Intro').css(button_css);
-        //     skip_button.click(function () {
-        //         // TODO: Hide button
-        //         video.setCurrentTime(seconds);
-        //         skip_button.hide()
-        //     });
-        //     var body = $('body');
-        //     body.prepend(skip_button);
-        //  // TODO: check if video currentTime exceeds skip time and hide button
-        // }
+        var video = VILOS_PLAYERJS;
+        var button_visible = false;
+        var button_pressed = false;
+        if(intro_times.length > 0){
+            var skip_button = $('<button/>').text('Skip Intro').css(button_css);
+            skip_button.click(function () {
+                video.setCurrentTime(intro_times[1]);
+                button_visible = false;
+                button_pressed = true;
+                skip_button.hide();
+            }).mouseenter(function(){
+                skip_button.css('background-color', 'black');
+            }).mouseleave(function(){
+                skip_button.css('background-color', 'transparent');
+            }).focus(function(){
+                skip_button.css('background-color', '#df6300');
+            });
+            var body = $('body');
+            skip_button.hide()
+            body.prepend(skip_button);
+            var interval = setInterval(function(){
+                VILOS_PLAYERJS.getCurrentTime(time => {current_time = time;});
+                if (current_time < 0){
+                    return;
+                }
+                if(intro_times[0] <= current_time && current_time < intro_times[1]){
+                    if(!button_visible && !button_pressed){
+                        button_visible = true; 
+                        skip_button.show();
+                    }
+                } else{
+                    button_visible = false;
+                    skip_button.hide();
+                }
+                if(current_time > intro_times[1]){
+                    button_visible = false
+                    skip_button.hide();
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
     }
     request.send();
 }
@@ -135,6 +171,7 @@ var time_by_lsg = function(subtitles){
     var start, end = 0;
     for(var i = 0; i < timestamps.length; i++){
         // TODO: Half the subtitles is not half the length of an episode, need to get the average while calculating.
+        // TODO: We can save iterations here as well performing the calculations in the previous loop
         if(i+1 >= timestamps.length || i > timestamps.length/2){
             break;
         }
