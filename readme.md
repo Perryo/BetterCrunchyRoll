@@ -1,8 +1,13 @@
 ## BetterCrunchyRoll - Makes Crunchyroll better!
+Responsive video with inline episode selection and search
 
-![Preview](better-crunchyroll-preview.png)
+![Preview](/resources/bettercrunchyroll.gif)
 
-### Responsive video with inline episode selection and search
+
+
+### Why?
+Default Crunchyroll leaves much to be desired:
+![Default Crunchyroll](/resources/default.png)
 
 ### How do I use these?
 1. Download [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en) Chrome extension
