@@ -6,7 +6,7 @@
  * Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
  * Dialogue: 0,0:00:07.84,0:00:09.46,string,Acchan,0000,0000,0000,,string, string.
  */
-var current_time = -1;
+var CURRENT_TIME = -1;
 var button_css = {
     'padding': '10px 20px',
     'background-color': 'transparent',
@@ -24,7 +24,6 @@ var button_css = {
  * @param {string} time - Timestamp in the format of 0:02:34.55
  */
 var to_seconds = function(time){
-
 	var t = time.split(':');
 	return (+t[0]) * 60 * 60 + (+t[1]) * 60 + (+t[2]);
 }
@@ -34,7 +33,7 @@ var to_seconds = function(time){
  * content gets loaded in an iframe its not accessible directly
  */
 var get_page_metadata = function() {
-    metadata = {}
+    var metadata = {}
     $('script').each(function() {
         var text = this.text;
         if (text.indexOf('vilos.config.media') > 0) {
@@ -48,14 +47,6 @@ var get_page_metadata = function() {
 }
 
 /**
- * VILOS player only accepts a callback function to get the time.
- * @param {double} time - Time of current video
- */
-var get_current_time = function(time){
-    current_time = time;
-}
-
-/**
  * Performs skipping of intros by several methods
  */
 var intro_skip = function(){
@@ -65,7 +56,7 @@ var intro_skip = function(){
     request.responseType = 'text';
     console.log('Found subtitles at: ' + metadata.subtitles[0].url);
     request.onload = function() {
-        subtitles = request.response;
+        var subtitles = request.response;
         // TODO: Data stucture for episode intros with dialog, use lsg as fallback
         var intro_times = time_by_lsg(subtitles);
         var video = VILOS_PLAYERJS;
@@ -89,11 +80,11 @@ var intro_skip = function(){
             skip_button.hide()
             body.prepend(skip_button);
             var interval = setInterval(function(){
-                VILOS_PLAYERJS.getCurrentTime(time => {current_time = time;});
-                if (current_time < 0){
+                VILOS_PLAYERJS.getCurrentTime(time => {CURRENT_TIME = time;});
+                if (CURRENT_TIME < 0){
                     return;
                 }
-                if(intro_times[0] <= current_time && current_time < intro_times[1]){
+                if(intro_times[0] <= CURRENT_TIME && CURRENT_TIME < intro_times[1]){
                     if(!button_visible && !button_pressed){
                         button_visible = true; 
                         skip_button.show();
@@ -102,7 +93,7 @@ var intro_skip = function(){
                     button_visible = false;
                     skip_button.hide();
                 }
-                if(current_time > intro_times[1]){
+                if(CURRENT_TIME > intro_times[1]){
                     button_visible = false
                     skip_button.hide();
                     clearInterval(interval);
@@ -140,8 +131,8 @@ var time_at_subtitle = function(subtitles, subtitle_line){
  * @param {*} last - Last line to find timestamp of (end of title sequence)
  */
 var time_by_text = function(subtitles, first, last){
-    start = time_at_subtitle(first);
-    end = time_at_subtitle(last);
+    var start = time_at_subtitle(first);
+    var end = time_at_subtitle(last);
     console.log('Found intro bounds: ' + start + ' - ' + end);
     return [start, end];
 }
