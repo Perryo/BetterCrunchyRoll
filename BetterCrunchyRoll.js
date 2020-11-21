@@ -41,7 +41,7 @@
         'background-color': 'black',
         'z-index': 102,
         'top': 0,
-        'height': '35px',
+        'height': '48px',
         'position': 'fixed',
         'width': '100%',
         'padding': '6px'
