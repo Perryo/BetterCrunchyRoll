@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Makes crunchyroll videos better with streamlined controls
 // @author       James Perry
 // @match        https://www.crunchyroll.com/*
