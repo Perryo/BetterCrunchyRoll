@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  Makes crunchyroll videos better with streamlined controls
 // @author       James Perry
 // @match        https://www.crunchyroll.com/*
@@ -41,10 +41,10 @@
         'background-color': 'black',
         'z-index': 102,
         'top': 0,
-        'height': '48px',
+        'height': '24px',
         'position': 'fixed',
         'width': '100%',
-        'padding': '6px'
+        'padding': '13px 6px'
     }
 
     var container_css = {
