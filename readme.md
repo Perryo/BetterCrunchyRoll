@@ -11,7 +11,7 @@ Default Crunchyroll leaves much to be desired:
 
 ### How does the skip work?
 Current skip functionality relies on the subtitles for soft-subbed episodes. There are two current methods being explored, with only one currently implemented.
-#### 1. Skip by Longest Subtitle Gap (LSG)
+#### 1. Skip by Longest Subtitle Gap (LSG) [Currently In Beta]
 
 This strategy relies on the nature of many Crunchyroll animes not having subtitled intro songs. The script will check the subtitle file for the longest period of time without subtitles, which majority of the time is the intro seqeunce. It filters out gaps at the end of episodes, reducing false positives, as it is unlikely for intros to live in this location. 
 
