@@ -17,11 +17,11 @@ This strategy relies on the nature of many Crunchyroll animes not having subtitl
 
 Advantages:
 - Dynamic, can be run regardless of episode
-- If very accurate on animes without subtitled intro songs
+- Is very accurate on animes without subtitled intro songs
 
 Disadvantages:
 - Does not work at all on animes with subtitled intros
-- Can miss relevant non subtitled sequences directly proceeding or following the intro.
+- Can skip relevant non subtitled sequences directly proceeding or following the intro.
 
 #### 2. Skip by intro subtitles
 This method relies on being able to lookup the first and last lines of the subtitled intro for episodes with subtitled intros. The script will then search the subtitle file for the times of these intro strings.
