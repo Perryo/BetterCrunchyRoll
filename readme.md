@@ -12,7 +12,7 @@ Default Crunchyroll leaves much to be desired:
 ### How does the skip work?
 Current skip functionality relies on the subtitles for soft-subbed episodes. There are two current methods being explored, with only one currently implemented.
 
-#### 2. Skip by intro subtitles
+#### 1. Skip by intro subtitles
 This method relies on being able to lookup the subtitles by their special styles. A normal subtitle looks something like:
 
 ```
