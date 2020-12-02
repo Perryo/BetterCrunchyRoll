@@ -11,7 +11,32 @@ Default Crunchyroll leaves much to be desired:
 
 ### How does the skip work?
 Current skip functionality relies on the subtitles for soft-subbed episodes. There are two current methods being explored, with only one currently implemented.
-#### 1. Skip by Longest Subtitle Gap (LSG) [Currently In Beta]
+
+#### 2. Skip by intro subtitles
+This method relies on being able to lookup the subtitles by their special styles. A normal subtitle looks something like:
+
+```
+Dialogue: 0,0:02:27.20,0:02:29.37,Default,,0000,0000,0000,,What is pi?
+```
+
+An intro subtitle looks like:
+
+```
+Dialogue: 0,0:02:56.23,0:03:01.82,Default,,0000,0000,0000,,{\i1}Though there may be no right answers{\i0}\N{\i1}in my ill-defined tale,{\i0}
+```
+
+Notice the the `{\i#}` format. This algorithm checks for the longest amount of sequential lines with this format and handles it as the intro.
+
+Advantages:
+- Extremely accurate
+
+Disadvantages:
+- Requires episode to have subtitled intro
+
+To account for the disadvantage of this approach the fallback algorithm is LSG.
+
+
+#### 2. Skip by Longest Subtitle Gap (LSG) 
 
 This strategy relies on the nature of many Crunchyroll animes not having subtitled intro songs. The script will check the subtitle file for the longest period of time without subtitles, which majority of the time is the intro seqeunce. It filters out gaps at the end of episodes, reducing false positives, as it is unlikely for intros to live in this location. 
 
@@ -23,17 +48,7 @@ Disadvantages:
 - Does not work at all on animes with subtitled intros
 - Can skip relevant non subtitled sequences directly proceeding or following the intro.
 
-#### 2. Skip by intro subtitles
-This method relies on being able to lookup the first and last lines of the subtitled intro for episodes with subtitled intros. The script will then search the subtitle file for the times of these intro strings.
 
-Advantages:
-- Extremely accurate
-
-Disadvantages:
-- Requires episode to have subtitled intro
-- Requires storage and retrieval of intro start and end subtitles. 
-- Not dynamic as requires some data about anime
-- Breaks or requires special casing for animes with changing intro songs 
 
 ### How do I use these?
 1. Download [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en) Chrome extension

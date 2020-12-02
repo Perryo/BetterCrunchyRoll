@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      2.3
+// @version      2.4
 // @description  Makes crunchyroll videos better with streamlined controls
 // @author       James Perry
 // @match        https://www.crunchyroll.com/*
@@ -286,8 +286,8 @@
         request.responseType = 'text';
         request.onload = function() {
             var subtitles = request.response;
-            // TODO: Data stucture for episode intros with dialog, use lsg as fallback
-            var intro_times = time_by_lsg(subtitles);
+            var intro_times = find_intro(subtitles);
+            console.log('Intro at: ' + intro_times[0] + ' - ' + intro_times[1]);
             var video = VILOS_PLAYERJS;
             var button_visible = false;
             var button_pressed = false;
@@ -333,78 +333,100 @@
         request.send();
     }
 
-    /**
-     * Returns a timestamp of a subtitle
-     * @param {dictionary} subtitles - Episode subtitles
-     * @param {string} subtitle_line - Line of which to find timestamp
-     * 
-     * Caveat - Does not work for episodes without subbed intro dialog, or intros with no dialog sequence
-     */
-    var time_at_subtitle = function(subtitles, subtitle_line){
-        var intro_end_regex = new RegExp('Dialogue: .*' + subtitle_line, 'g');
-        // Match all the intro dialogue, optimization here for intro format with "{\i1}" (may be series specific)
-        var intro_end_candidates = subtitles.match(intro_end_regex);
-        var intro_end_dialog = intro_end_candidates[intro_end_candidates.length-1];
-        // Subtitle format (We only care about end):
-        // Format: Layer, Start, End, Name, ...
-        var dialog_components = intro_end_dialog.split(',');
-        // The first index will be occupied by Format and Layer
-        var intro_end_time = dialog_components[2]; // End time as string, need to set video to time
-        return to_seconds(intro_end_time);
-    }
-
-    /**
-     * Finds bounds of two subtitles. I.E. Bounds of intro for element display and skip
-     * @param {*} subtitles - Episode subtitles
-     * @param {*} first - First line to find timestamp of (beginning of title sequence)
-     * @param {*} last - Last line to find timestamp of (end of title sequence)
-     */
-    var time_by_text = function(subtitles, first, last){
-        var start = time_at_subtitle(first);
-        var end = time_at_subtitle(last);
-        console.info('BetterCrunchyroll: Found intro bounds: ' + start + ' - ' + end);
-        return [start, end];
-    }
-
-    /**
-     *  Get intro by LSG (Longest Subtitle Gap)
-     * @param {*} subtitles - Episode subtitles
-     * 
-     * Caveat - May skip critical sequences without subs/speech preceding and after intro
-     */
-    var time_by_lsg = function(subtitles){
-        var dialog_line_regex = new RegExp(/Dialogue:.*/g);
-        var dialog_timestamps = subtitles.match(dialog_line_regex);
-        // Only take subtitles on the 0 layer, as ancillary subs may interfere
-        var timestamp_regex = new RegExp(/(?:\s0,)(\d+\:\d+\:\d+\.\d+,\d+\:\d+\:\d+\.\d+)/);
-        var timestamps = [];
-        for(var i = 0; i < dialog_timestamps.length; i++){
-            // Get all timestamps. Convert to seconds
-            var timestamp_elements = timestamp_regex.exec(dialog_timestamps[i])[1].trim().split(',');
-            timestamps.push(to_seconds(timestamp_elements[0]));
-            timestamps.push(to_seconds(timestamp_elements[1]));
-        }
-        // Find largest diff between all timestamps, sorted by default.
-        var current_max = -1;
-        var start, end = 0;
-        for(var i = 0; i < timestamps.length; i++){
-            // TODO: Half the subtitles is not half the length of an episode, need to get the average while calculating.
-            // TODO: We can save iterations here as well performing the calculations in the previous loop
-            if(i+1 >= timestamps.length || i > timestamps.length/2){
-                break;
-            }
-            else {
-                var diff = timestamps[i+1] - timestamps[i];
-                if(diff > current_max){
-                    start = timestamps[i];
-                    end = timestamps[i+1];
-                    current_max = diff;
+/**
+ * Get intro by subtitle styles or LSG
+ * @param {*} subtitles - Episode Subtitles
+ * 
+ * A normal subtitle looks something like:
+ * Dialogue: 0,0:02:27.20,0:02:29.37,Default,,0000,0000,0000,,What is pi?
+ * 
+ * A subtitle for an intro looks like: 
+ * Dialogue: 0,0:02:56.23,0:03:01.82,Default,,0000,0000,0000,,{\i1}Though there may be no right answers{\i0}\N{\i1}in my ill-defined tale,{\i0}
+ * 
+ * Style matching for intro detects sequences of the italicized subs by the {\i#} format.
+ * LSG (Longest Subtitle Gap) detects sequences of missing subtitles by parsing all the timestamps and finding the max diff between two timestamps.
+ */
+var find_intro = function(subtitles){
+    var dialog_line_regex = new RegExp(/Dialogue:.*/g);
+    var dialog_timestamps = subtitles.match(dialog_line_regex);
+    var timestamp_regex = new RegExp(/(?:\s0,)(\d+\:\d+\:\d+\.\d+,\d+\:\d+\:\d+\.\d+)/);
+    // Style variables
+    var longest_style_sequence = 0;
+    var current_style_sequence = 0;
+    var start = 0;
+    var time_before_start = -1;
+    var final_time_before_start = -1;
+    var style_timestamps = [];
+    // LSG variables
+    var lsg_timestamps = [];
+    // Only check half of episode subs
+    for(var i = 0; i < dialog_timestamps.length/2; i++){
+        // Get all timestamps. Check for style
+        var style_match = dialog_timestamps[i].match(/,{\\i\d}.*/g);
+        var timestamp_elements = timestamp_regex.exec(dialog_timestamps[i])[1].trim().split(',');
+        // LSG Save
+        lsg_timestamps.push(to_seconds(timestamp_elements[0]));
+        lsg_timestamps.push(to_seconds(timestamp_elements[1]));
+        if(style_match != null){
+            current_style_sequence++;
+            if(start == 0) {
+                // Save the current start time
+                start = to_seconds(timestamp_elements[0]);
+                if (i-1 > 0){
+                    var times_before_start = timestamp_regex.exec(dialog_timestamps[i-1])[1].trim().split(',');
+                    time_before_start = to_seconds(times_before_start[1]);
                 }
             }
+        } else {
+            // No match, sequence has ended, update longest if necessary
+            if (current_style_sequence > longest_style_sequence) {
+                longest_style_sequence = current_style_sequence;
+                // If we have a new longest sequence we need to save these times
+                style_timestamps = [];
+                final_time_before_start = time_before_start
+                var timestamp_elements = timestamp_regex.exec(dialog_timestamps[i])[1].trim().split(',');
+                style_timestamps.push(start);
+                style_timestamps.push(to_seconds(timestamp_elements[0]));
+            }
+            // Reset the start and current sequence
+            start = 0;
+            current_style_sequence = 0;
         }
-        console.info('BetterCrunchyroll: Found intro bounds: ' + start + ' - ' + end);
+    }
+    // Subtract the avg time before the last subtitle before the intro and the first subtitle of the intro. This will help buffer the button display for the beginning of the intro.
+    if(style_timestamps.length > 1){
+        var avg_time_between_subs = Math.ceil((style_timestamps[0] - final_time_before_start)/2);
+        style_timestamps[0] = style_timestamps[0] - avg_time_between_subs;
+    }
+
+    // LSG
+    // Find largest diff between all timestamps, sorted by default.
+    var current_max = -1;
+    var start, end;
+    for(var i = 0; i < lsg_timestamps.length; i++){
+        if(i+1 >= lsg_timestamps.length || i > lsg_timestamps.length){
+            break;
+        }
+        else {
+            var diff = lsg_timestamps[i+1] - lsg_timestamps[i];
+            if(diff > current_max){
+                start = lsg_timestamps[i];
+                end = lsg_timestamps[i+1];
+                current_max = diff;
+            }
+        }
+    }
+    // This is arbitrary. Needs data, we just dont want false positives
+    if(longest_style_sequence < 5){
+        console.log('Found intro by LSG')
         return [start, end];
     }
+    else {
+        console.log('Found intro by subtitle style');
+        console.log(style_timestamps);
+        return style_timestamps;
+    }
+}
 
     window.addEventListener('load', function(event) {
         console.info('BetterCrunchyroll: Initializing');
