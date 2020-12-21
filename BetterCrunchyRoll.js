@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      3.3
+// @version      3.4
 // @description  Makes crunchyroll videos better with streamlined controls
 // @author       James Perry
 // @match        https://www.crunchyroll.com/*
@@ -285,12 +285,14 @@
                 drawer.css('width', drawer_width);
                 drawer.css('padding', drawer_padding);
                 carousel.css('opacity', '1');
+                $('#bc-header-area').css('pointer-events', 'none');
             } else {
                 collapsed = true;
                 drawer_container.text('Expand Episodes');
                 carousel.css('opacity', '0');
                 drawer.css('width',0);
                 drawer.css('padding', 0);
+                $('#bc-header-area').css('pointer-events', 'all');
             }
         });
         init_arrows();
