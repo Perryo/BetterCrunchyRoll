@@ -174,11 +174,9 @@
         // TODO: Need to detect video hover...
         $(selectors).mousemove(function() {
             if (!fadeInBuffer && timer) {
-                console.log("clearTimer");
                 clearTimeout(timer);
                 timer = 0;
 
-                console.log("fadeIn");
                 $('#bc-header').css('display', 'block');
                 $('html').css({
                     cursor: ''
@@ -190,9 +188,7 @@
                 fadeInBuffer = false;
             }
 
-
             timer = setTimeout(function() {
-                console.log("fadeout");
                 $('#bc-header').css('display', 'none');
                 $('.html5gallery-box-0').css({
                     cursor: 'none'
