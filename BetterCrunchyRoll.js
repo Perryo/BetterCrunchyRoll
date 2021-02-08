@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      3.4
+// @version      3.5
 // @description  Makes crunchyroll videos better with streamlined controls
 // @author       James Perry
 // @match        https://www.crunchyroll.com/*
@@ -107,7 +107,8 @@
         'position': 'fixed',
         'bottom': '50px',
         'right': '100px',
-        'z-index': 100
+        'z-index': 100,
+        'display': 'none'
     }
 
     var CURRENT_TIME = -1;
@@ -371,7 +372,6 @@
                     skip_button.css('background-color', '#df6300');
                 });
                 var body = $('body');
-                skip_button.hide()
                 body.prepend(skip_button);
                 var interval = setInterval(function(){
                     VILOS_PLAYERJS.getCurrentTime(time => {CURRENT_TIME = time;});
@@ -468,20 +468,36 @@ var find_intro = function(subtitles){
     // Find largest diff between all timestamps, sorted by default.
     var current_max = -1;
     var start, end;
-    for(var i = 0; i < lsg_timestamps.length; i++){
-        if(i+1 >= lsg_timestamps.length || i > lsg_timestamps.length){
+    var first_sub = true;
+    var length = lsg_timestamps.length/2; // We dont need to check all the subs, intros should be at the end of an episode
+    for(var i = 0; i < length; i++){
+        if(i+1 >= length || i > length){
             break;
         }
         else {
+            // Intro may be before first subtitle, check first 5 seconds
+            var start_diff;
+            if (lsg_timestamps[i] > 5 && first_sub){
+                start_diff = lsg_timestamps[i];
+                first_sub = false;
+            }
             var diff = lsg_timestamps[i+1] - lsg_timestamps[i];
-            if(diff > current_max){
+            // First subtitle is before start of video, and difference is greater than next gap.
+            // Use the gap at the start of the video before any subtitles are present
+            if (start_diff && start_diff > diff && start_diff > current_max){
+                start = 0;
+                end = start_diff;
+                current_max = start_diff
+            }
+            else if(diff > current_max){
                 start = lsg_timestamps[i];
                 end = lsg_timestamps[i+1];
                 current_max = diff;
             }
         }
     }
-    // This is arbitrary. Needs data, we just dont want false positives
+    // Checking intro subtitles has more than x entries
+    // This is arbitrary. Needs data, we just dont want false positives. 
     if(longest_style_sequence < 5){
         console.log('Found intro by LSG')
         return [start, end];
