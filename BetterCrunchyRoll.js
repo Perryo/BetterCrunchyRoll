@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      3.6
+// @version      3.7
 // @description  Makes crunchyroll videos better with streamlined controls
 // @author       James Perry
 // @match        https://www.crunchyroll.com/*
@@ -428,7 +428,14 @@ var find_intro = function(subtitles){
     for(var i = 0; i < dialog_timestamps.length/2; i++){
         // Get all timestamps. Check for style
         var style_match = dialog_timestamps[i].match(/,{\\i\d}.*/g);
-        var timestamp_elements = timestamp_regex.exec(dialog_timestamps[i])[1].trim().split(',');
+        try {
+            var timestamps = timestamp_regex.exec(dialog_timestamps[i]);
+            var timestamp_elements = timestamps[1].trim().split(',');
+        }
+        catch {
+            // No match, move on
+            continue;
+        }
         // LSG Save
         lsg_timestamps.push(to_seconds(timestamp_elements[0]));
         lsg_timestamps.push(to_seconds(timestamp_elements[1]));
