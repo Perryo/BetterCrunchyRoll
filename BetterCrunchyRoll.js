@@ -141,7 +141,7 @@
         });
 
         // Hide scroll bar
-        $('.main-page').css('overflow-y', 'hidden');
+        $('.main-page').css('overflow', 'hidden');
     }
 
     // TODO: Requires updates for subtitle resizing on initial page load
