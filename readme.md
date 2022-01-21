@@ -1,5 +1,15 @@
 ## Crunchyroll Intro Skip - Skip Crunchyroll intros
 
+### How do I use these?
+1. Download [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en) Chrome extension
+2. Go to Chromes extensions page (chrome://extensions), enable the Allow access to file URLs checkbox at the Tampermonkey item
+3. Click the userscript you wish to use in the repo: [BetterCrunchyRoll](https://github.com/Perryo/BetterCrunchyRoll/blob/master/BetterCrunchyRoll.js)
+4. Click 'raw', when redirected to Tampermonkey click 'install'
+
+  --- OR ---
+  
+4. In the Tampermonkey dashboard under "Utilites" paste [the raw URL](https://raw.githubusercontent.com/Perryo/BetterCrunchyRoll/master/BetterCrunchyRoll.js) into the "Install from URL" field and submit
+
 ### How does the skip work?
 Current skip functionality relies on the subtitles for soft-subbed episodes. There are two current methods being explored.
 #### 1. Skip by intro subtitles
@@ -37,15 +47,3 @@ Advantages:
 Disadvantages:
 - Does not work at all on animes with subtitled intros
 - Can skip relevant non subtitled sequences directly proceeding or following the intro.
-
-
-
-### How do I use these?
-1. Download [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en) Chrome extension
-2. Go to Chromes extensions page (chrome://extensions), enable the Allow access to file URLs checkbox at the Tampermonkey item
-3. Click the userscript you wish to use in the repo
-4. Click 'raw', when redirected to Tampermonkey click 'install'
-
-  --- OR ---
-  
-4. In the Tampermonkey dashboard under "Utilites" paste the raw URL into the "Install from URL" field and submit
