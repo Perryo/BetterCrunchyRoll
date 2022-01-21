@@ -1,13 +1,4 @@
-## BetterCrunchyRoll - Makes Crunchyroll better!
-Responsive video with inline episode selection, search, and beta intro skip functionaility.
-
-![Preview](/resources/bettercrunchyroll.gif)
-
-
-
-### Why?
-Default Crunchyroll leaves much to be desired:
-![Default Crunchyroll](/resources/default.png)
+## Crunchyroll Intro Skip - Skip Crunchyroll intros
 
 ### How does the skip work?
 Current skip functionality relies on the subtitles for soft-subbed episodes. There are two current methods being explored.
