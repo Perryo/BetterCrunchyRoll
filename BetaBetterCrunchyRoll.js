@@ -26,7 +26,7 @@
             bottom: 50px;
             right: 100px;
             z-index: 100;
-            visibility: none;
+            visibility: hidden;
         }
          .bettercrunchyroll-button:hover {
               background-color: #f47521;
