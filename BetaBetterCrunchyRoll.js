@@ -26,6 +26,7 @@
             bottom: 50px;
             right: 100px;
             z-index: 100;
+            visibility: none;
         }
          .bettercrunchyroll-button:hover {
               background-color: #f47521;
@@ -209,15 +210,17 @@
         }
         // Checking intro subtitles has more than x entries
         // This is arbitrary. Needs data, we just dont want false positives.
-        if(longest_style_sequence < 5){
-            console.log('BetterCrunchyroll: Found intro by LSG')
-            return [start, end];
+        if(longest_style_sequence > 7) {
+            var style_sequence_length = longest_style_sequence[1] - longest_style_sequence[0]
+            var lsg_length = end - start
+            if(style_sequence_length > lsg_length && longest_style_sequence[1] < 300) {
+                console.log('BetterCrunchyroll: Found intro by subtitle style');
+                console.log(style_timestamps);
+                return style_timestamps;
+            }
         }
-        else {
-            console.log('BetterCrunchyroll: Found intro by subtitle style');
-            console.log(style_timestamps);
-            return style_timestamps;
-        }
+        console.log('BetterCrunchyroll: Found intro by LSG')
+        return [start, end];
     }
 
     // Waits for subtitle URL to become available in the iframe context, from a message.
