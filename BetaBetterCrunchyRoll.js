@@ -104,35 +104,25 @@
     }
 
     /**
-     * Get intro by subtitle styles or LSG
+     * Get intro by LSG
      * @param {*} subtitles - Episode Subtitles
      *
      * A normal subtitle looks something like:
      * Dialogue: 0,0:02:27.20,0:02:29.37,Default,,0000,0000,0000,,What is pi?
-     *
-     * A subtitle for an intro looks like:
-     * Dialogue: 0,0:02:56.23,0:03:01.82,Default,,0000,0000,0000,,{\i1}Though there may be no right answers{\i0}\N{\i1}in my ill-defined tale,{\i0}
-     *
-     * Style matching for intro detects sequences of the italicized subs by the {\i#} format.
-     * LSG (Longest Subtitle Gap) detects sequences of missing subtitles by parsing all the timestamps and finding the max diff between two timestamps.
      */
     var find_intro = function(subtitles){
         var dialog_line_regex = new RegExp(/Dialogue:.*/g);
         var dialog_timestamps = subtitles.match(dialog_line_regex);
         var timestamp_regex = new RegExp(/(?:\s0,)(\d+\:\d+\:\d+\.\d+,\d+\:\d+\:\d+\.\d+)/);
         // Style variables
-        var longest_style_sequence = 0;
-        var current_style_sequence = 0;
         var start = 0;
         var time_before_start = -1;
         var final_time_before_start = -1;
-        var style_timestamps = [];
         // LSG variables
         var lsg_timestamps = [];
         // Only check half of episode subs
         for(var i = 0; i < dialog_timestamps.length/2; i++){
-            // Get all timestamps. Check for style
-            var style_match = dialog_timestamps[i].match(/,{\\i\d}.*/g);
+            // Get all timestamps
             try {
                 var timestamps = timestamp_regex.exec(dialog_timestamps[i]);
                 var timestamp_elements = timestamps[1].trim().split(',');
@@ -144,36 +134,6 @@
             // LSG Save
             lsg_timestamps.push(to_seconds(timestamp_elements[0]));
             lsg_timestamps.push(to_seconds(timestamp_elements[1]));
-            if(style_match != null){
-                current_style_sequence++;
-                if(start == 0) {
-                    // Save the current start time
-                    start = to_seconds(timestamp_elements[0]);
-                    if (i-1 > 0){
-                        var times_before_start = timestamp_regex.exec(dialog_timestamps[i-1])[1].trim().split(',');
-                        time_before_start = to_seconds(times_before_start[1]);
-                    }
-                }
-            } else {
-                // No match, sequence has ended, update longest if necessary
-                if (current_style_sequence > longest_style_sequence) {
-                    longest_style_sequence = current_style_sequence;
-                    // If we have a new longest sequence we need to save these times
-                    style_timestamps = [];
-                    final_time_before_start = time_before_start
-                    var timestamp_elements = timestamp_regex.exec(dialog_timestamps[i])[1].trim().split(',');
-                    style_timestamps.push(start);
-                    style_timestamps.push(to_seconds(timestamp_elements[0]));
-                }
-                // Reset the start and current sequence
-                start = 0;
-                current_style_sequence = 0;
-            }
-        }
-        // Subtract the avg time before the last subtitle before the intro and the first subtitle of the intro. This will help buffer the button display for the beginning of the intro.
-        if(style_timestamps.length > 1){
-            var avg_time_between_subs = Math.ceil((style_timestamps[0] - final_time_before_start)/2);
-            style_timestamps[0] = style_timestamps[0] - avg_time_between_subs;
         }
 
         // LSG
@@ -206,17 +166,6 @@
                     end = lsg_timestamps[i+1];
                     current_max = diff;
                 }
-            }
-        }
-        // Checking intro subtitles has more than x entries
-        // This is arbitrary. Needs data, we just dont want false positives.
-        if(longest_style_sequence > 7) {
-            var style_sequence_length = longest_style_sequence[1] - longest_style_sequence[0]
-            var lsg_length = end - start
-            if(style_sequence_length > lsg_length && longest_style_sequence[1] < 300) {
-                console.log('BetterCrunchyroll: Found intro by subtitle style');
-                console.log(style_timestamps);
-                return style_timestamps;
             }
         }
         console.log('BetterCrunchyroll: Found intro by LSG')
