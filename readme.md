@@ -11,8 +11,6 @@
 4. In the Tampermonkey dashboard under "Utilites" paste [the raw URL](https://raw.githubusercontent.com/Perryo/BetterCrunchyRoll/master/BetterCrunchyRoll.js) into the "Install from URL" field and submit
 
 ### How does the skip work?
-Current skip functionality relies on the subtitles for soft-subbed episodes. There are two current methods being explored.
-
 #### Skip by Longest Subtitle Gap (LSG) 
 
 This strategy relies on the nature of many Crunchyroll animes not having subtitled intro songs. The script will check the subtitle file for the longest period of time without subtitles, which majority of the time is the intro seqeunce. It filters out gaps at the end of episodes, reducing false positives, as it is unlikely for intros to live in this location. 
