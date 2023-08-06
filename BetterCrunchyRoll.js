@@ -150,13 +150,13 @@
         var current_max = -1;
         var end;
         var first_sub = true;
-        var length = lsg_timestamps.length/2; // We dont need to check all the subs, intros should be at the end of an episode
+        var length = lsg_timestamps.length/2; // We dont need to check all the subs, intros should not be at the end of an episode.
         for(var i = 0; i < length; i++){
             if(i+1 >= length || i > length){
                 break;
             }
             else {
-                // Intro may be before first subtitle, check first 5 seconds
+                // Intro may be before first subtitle, check first 5 seconds.
                 var start_diff;
                 if (lsg_timestamps[i] > 5 && first_sub){
                     start_diff = lsg_timestamps[i];
@@ -231,7 +231,7 @@
                                 startVideoCheck(SUBTITLES)
                             }
                         } catch {
-                            console.log('cannot find sub url')
+                            console.log('BetterCrunchyroll: Cannot find subtitle url')
                         }
                     }
                 }, false);
