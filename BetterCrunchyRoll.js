@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         BETA Better Crunchyroll
+// @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
 // @version      4.0
 // @description  Intro Skip for crunchyroll
