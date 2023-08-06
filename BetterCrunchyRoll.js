@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BETA Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Skip for crunchyroll beta experience
 // @author       James Perry
 // @match        *://www.crunchyroll.com/*
