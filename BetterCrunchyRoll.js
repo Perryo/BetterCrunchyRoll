@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  Intro Skip for crunchyroll
 // @author       James Perry
 // @match        *://www.crunchyroll.com/*
@@ -14,9 +14,11 @@
 
 (function() {
     'use strict';
-    var VIDEO = null
-    var SUBTITLES = null
-    var button_css = `
+    let VIDEO = null
+    let SUBTITLES = null
+    let SKIP_BUTTON = null
+    let SKIP_INTERVAL = null
+    const button_css = `
         .bettercrunchyroll-button {
             padding: 15px 40px;
             background-color: transparent;
@@ -42,11 +44,14 @@
      * Converts a timestamp into seconds
      * @param {string} time - Timestamp in the format of 0:02:34.55
      */
-    var to_seconds = function(time){
-        var t = time.split(':');
+    const to_seconds = function(time){
+        const t = time.split(':');
         return (+t[0]) * 60 * 60 + (+t[1]) * 60 + (+t[2]);
     }
 
+    /**
+     * Used to execute specific logic for i-framed video elements vs main window elements
+     */
     function isIframe () {
         try {
             return window.self !== window.top;
@@ -57,54 +62,55 @@
 
 
     /**
-     * Performs skipping of intros by several methods
+     * Performs skipping of intros by checking time gaps in the downloaded subtitles
      * @param {String} url - Subtitles url
      */
-    var intro_skip = function(url){
+    const intro_skip = function(url){
         console.info('BetterCrunchyroll: Downloading subs')
-        var request = new XMLHttpRequest();
+        const request = new XMLHttpRequest();
         request.open('GET', url);
         request.responseType = 'text';
         request.onload = function() {
-            var subtitles = request.response;
-            var intro_times = find_intro(subtitles);
+            const subtitles = request.response;
+            const intro_times = find_intro(subtitles);
             console.log('BetterCrunchyroll: Intro at: ' + intro_times[0] + ' - ' + intro_times[1]);
-            var button_visible = false;
-            var button_pressed = false;
-            var styleSheet = document.createElement("style")
+            let button_visible = false;
+            let button_pressed = false;
+            const styleSheet = document.createElement("style")
             styleSheet.type = "text/css"
             styleSheet.innerText = button_css
             document.head.appendChild(styleSheet)
             if(intro_times.length > 0){
-                var skip_button = document.createElement("button");
-                skip_button.innerText = "Skip"
-                skip_button.classList.add('bettercrunchyroll-button')
-                skip_button.style.setProperty('visibility', 'hidden');
-                skip_button.addEventListener('click', function () {
+                SKIP_BUTTON = document.createElement("button");
+                SKIP_BUTTON.innerText = "Skip"
+                SKIP_BUTTON.classList.add('bettercrunchyroll-button')
+                SKIP_BUTTON.style.setProperty('visibility', 'hidden');
+                SKIP_BUTTON.addEventListener('click', function () {
                     VIDEO.currentTime = intro_times[1];
                     button_visible = false;
                     button_pressed = true;
-                    skip_button.style.setProperty('visibility', 'hidden');
+                    SKIP_BUTTON.style.setProperty('visibility', 'hidden');
+                    SKIP_BUTTON.remove()
                 })
-                var body = document.getElementsByTagName('body')[0];
-                body.appendChild(skip_button);
+                const body = document.getElementsByTagName('body')[0];
+                body.appendChild(SKIP_BUTTON);
                 let current_time
-                var interval = setInterval(function(){
+                SKIP_INTERVAL = setInterval(function(){
                     current_time = VIDEO.currentTime
                     if (current_time < 0){ return; }
                     if(intro_times[0] <= current_time && current_time < intro_times[1]){
                         if(!button_visible && !button_pressed){
                             button_visible = true;
-                            skip_button.style.setProperty('visibility', 'visible');
+                            SKIP_BUTTON.style.setProperty('visibility', 'visible');
                         }
                     } else{
                         button_visible = false;
-                        skip_button.style.setProperty('visibility', 'hidden');
+                        SKIP_BUTTON.style.setProperty('visibility', 'hidden');
                     }
                     if(current_time > intro_times[1]){
                         button_visible = false
-                        skip_button.style.setProperty('visibility', 'hidden');
-                        clearInterval(interval);
+                        SKIP_BUTTON.style.setProperty('visibility', 'hidden');
+                        clearInterval(SKIP_INTERVAL);
                     }
                 }, 1000);
             }
@@ -119,22 +125,20 @@
      * A normal subtitle looks something like:
      * Dialogue: 0,0:02:27.20,0:02:29.37,Default,,0000,0000,0000,,What is pi?
      */
-    var find_intro = function(subtitles){
-        var dialog_line_regex = new RegExp(/Dialogue:.*/g);
-        var dialog_timestamps = subtitles.match(dialog_line_regex);
-        var timestamp_regex = new RegExp(/(?:\s0,)(\d+\:\d+\:\d+\.\d+,\d+\:\d+\:\d+\.\d+)/);
+    const find_intro = function(subtitles){
+        const dialog_line_regex = new RegExp(/Dialogue:.*/g);
+        const dialog_timestamps = subtitles.match(dialog_line_regex);
+        const timestamp_regex = new RegExp(/(?:\s0,)(\d+\:\d+\:\d+\.\d+,\d+\:\d+\:\d+\.\d+)/);
         // Style variables
-        var start = 0;
-        var time_before_start = -1;
-        var final_time_before_start = -1;
+        let start = 0;
         // LSG variables
-        var lsg_timestamps = [];
+        const lsg_timestamps = [];
         // Only check half of episode subs
-        for(var i = 0; i < dialog_timestamps.length/2; i++){
+        for(let i = 0; i < dialog_timestamps.length/2; i++){
             // Get all timestamps
             try {
-                var timestamps = timestamp_regex.exec(dialog_timestamps[i]);
-                var timestamp_elements = timestamps[1].trim().split(',');
+                const timestamps = timestamp_regex.exec(dialog_timestamps[i]);
+                const timestamp_elements = timestamps[1].trim().split(',');
             }
             catch {
                 // No match, move on
@@ -147,22 +151,22 @@
 
         // LSG
         // Find largest diff between all timestamps, sorted by default.
-        var current_max = -1;
-        var end;
-        var first_sub = true;
-        var length = lsg_timestamps.length/2; // We dont need to check all the subs, intros should not be at the end of an episode.
-        for(var i = 0; i < length; i++){
+        let current_max = -1;
+        let end;
+        let first_sub = true;
+        const length = lsg_timestamps.length/2; // We dont need to check all the subs, intros should not be at the end of an episode.
+        for(let i = 0; i < length; i++){
             if(i+1 >= length || i > length){
                 break;
             }
             else {
                 // Intro may be before first subtitle, check first 5 seconds.
-                var start_diff;
+                let start_diff;
                 if (lsg_timestamps[i] > 5 && first_sub){
                     start_diff = lsg_timestamps[i];
                     first_sub = false;
                 }
-                var diff = lsg_timestamps[i+1] - lsg_timestamps[i];
+                const diff = lsg_timestamps[i+1] - lsg_timestamps[i];
                 // First subtitle is before start of video, and difference is greater than next gap.
                 // Use the gap at the start of the video before any subtitles are present
                 if (start_diff && start_diff > diff && start_diff > current_max){
@@ -181,32 +185,27 @@
         return [start, end];
     }
 
-    // Waits for subtitle URL to become available in the iframe context, from a message.
-    var sub_check = () => {
-        var subCheckInterval = setInterval(() => {
-            if(!SUBTITLES) {return}
-            intro_skip(SUBTITLES)
-            clearInterval(subCheckInterval)
-        }, 500)
-    }
-
-    // Broadcasts a message to the iframe window with the subtitle URL
-    var broadcast = (frame, data) => {
-        var broadcastInterval = setInterval(() => {
-            frame.contentWindow.postMessage(data, '*');
-        }, 500)
-
+    /**
+     * Broadcasts a message to the iframe window with the subtitle URL
+     * @param frame - Frame to post a message into
+     * @param data - Data to post
+     */
+    const broadcast = (frame, data) => {
         setTimeout(() => {
-            clearInterval(broadcastInterval)
-        }, 10 * 1000)
+            frame.contentWindow.postMessage(data, '*');
+        }, 2000)
     }
 
-    // Waits for the video iframe to finish loading before starting to broadcast the subtitle info to the iframe script.
-    var startVideoCheck = (subs) => {
-        var videoCheck = setInterval(() => {
-            var frames = document.getElementsByClassName('video-player');
+
+    /**
+     * Waits for the video iframe to finish loading before starting to broadcast the subtitle info to the iframe script.
+     * @param subs - URL of the subtitles, pulled from listening to the config API calls on the main window
+     */
+    const startVideoCheck = (subs) => {
+        const videoCheck = setInterval(() => {
+            const frames = document.getElementsByClassName('video-player');
             if(frames.length > 0) {
-                var frame = frames[0]
+                const frame = frames[0]
                 if (frame.className.indexOf('loading') > -1) { return }
                 broadcast(frame, {channel: 'bettercrunchyroll', url: subs['en-US'].url})
                 console.info('BetterCrunchyroll: Found subtitles config')
@@ -225,7 +224,7 @@
                 this.addEventListener("readystatechange", function () {
                     if (this.readyState === 4 && this.responseURL.indexOf('crunchyrollsvc') > -1 && this.responseURL.indexOf('play') > -1) {
                         try {
-                            var data = JSON.parse(this.response)
+                            const data = JSON.parse(this.response)
                             SUBTITLES = data.subtitles
                             if (SUBTITLES) {
                                 startVideoCheck(SUBTITLES)
@@ -243,27 +242,36 @@
     // ************************************************
     //              Runs in the iframe
     // ************************************************
-    if(isIframe()) {
-        // Listens to messages from the main window, sets the subtitle URL for the sub title function.
-        window.addEventListener('message', (e) => {
-            if (e.data.channel === 'bettercrunchyroll') {
-                SUBTITLES = e.data.url
-            }
-        })
-
-        // Attempts to find the video player, works in video player iframe only
-        var MAX_ATTEMPTS = 10;
-        var attempts = 0
-        var videoCheck = setInterval(() => {
+    const getVideo = () => {
+        // Attempts to find the video player so the current time can be checked, and fast forwarded.
+        const MAX_ATTEMPTS = 10;
+        let attempts = 0
+        const videoCheck = setInterval(() => {
             attempts += 1
             VIDEO = document.getElementById('player0')
             if (VIDEO) {
                 console.info('BetterCrunchyroll: Found video')
-                sub_check()
                 clearInterval(videoCheck)
             } else if (attempts >= MAX_ATTEMPTS) {
                 clearInterval(videoCheck)
             }
         }, 500)
+    }
+    if(isIframe()) {
+        // Listens to messages from the main window, sets the subtitle URL for the sub title function.
+        window.addEventListener('message', (e) => {
+            if (e.data.channel === 'bettercrunchyroll') {
+                // Check video before to make sure we can control skipping. Checking here ensures the subs rerun
+                // when they change, like on Single-SPA path change.
+                SUBTITLES = e.data.url
+                getVideo()
+                const videoReady = setInterval(() => {
+                    if(!VIDEO) {return}
+                    intro_skip(SUBTITLES)
+                    clearInterval(videoReady)
+                }, 500)
+            }
+        })
+
     }
 })();
