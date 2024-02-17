@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         Better Crunchyroll
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.2
 // @description  Intro Skip for crunchyroll
 // @author       James Perry
+// @match        *://crunchyroll.com/*
 // @match        *://www.crunchyroll.com/*
 // @match        *://static.crunchyroll.com/*
 // @updateURL    https://raw.githubusercontent.com/Perryo/BetterCrunchyRoll/master/BetterCrunchyRoll.js
